@@ -37,7 +37,6 @@
     button:disabled, textarea:disabled { opacity:.5; }
     .hint { grid-column:1/-1; display:flex; justify-content:space-between; gap:12px; align-items:center; font-size:11px; color:var(--muted); }
     .linkbtn { border:0; background:transparent; color:#b9c9ef; padding:2px 0; text-decoration:underline; }
-    .warning { color:#ffd6a0; }
     @media (max-width:520px) { .msg{max-width:94%;} .badge{display:none;} }
   </style>
 </head>
@@ -67,7 +66,10 @@
 
 <script type="module">
   import { Wllama } from 'https://cdn.jsdelivr.net/npm/@wllama/wllama@3.6.1/esm/index.js';
-  import WasmFromCDN from 'https://cdn.jsdelivr.net/npm/@wllama/wllama@3.6.1/esm/wasm-from-cdn.js';
+
+  const WLLAMA_CONFIG = {
+    default: 'https://cdn.jsdelivr.net/npm/@wllama/wllama@3.6.1/src/wasm/wllama.wasm'
+  };
 
   const MODEL = {
     repo: 'openbmb/MiniCPM5-2B-GGUF',
@@ -114,7 +116,7 @@
     try {
       setReady(false);
       statusEl.textContent = `ランタイム初期化中… ${browserNote()}`;
-      engine = new Wllama(WasmFromCDN, {
+      engine = new Wllama(WLLAMA_CONFIG, {
         parallelDownloads: 3,
         allowOffline: true
       });
