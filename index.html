@@ -30,6 +30,19 @@
     .msg.user { align-self:flex-end; background:var(--user); border-bottom-right-radius:5px; }
     .msg.ai { align-self:flex-start; background:var(--panel); border:1px solid var(--line); border-bottom-left-radius:5px; }
     .msg.error { border-color:#7b3b46; color:#ffd4d4; }
+    .thinking { display:flex; align-items:center; gap:9px; min-width:104px; color:var(--muted); }
+    .thinking-label { font-size:13px; }
+    .thinking-dots { display:flex; align-items:center; gap:4px; }
+    .thinking-dots span { width:6px; height:6px; border-radius:50%; background:var(--muted); opacity:.35; animation:thinkingPulse 1.15s infinite ease-in-out; }
+    .thinking-dots span:nth-child(2) { animation-delay:.15s; }
+    .thinking-dots span:nth-child(3) { animation-delay:.3s; }
+    @keyframes thinkingPulse {
+      0%, 70%, 100% { transform:translateY(0) scale(.9); opacity:.3; }
+      35% { transform:translateY(-4px) scale(1.08); opacity:1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .thinking-dots span { animation:none; opacity:.65; }
+    }
     .composer { position:sticky; bottom:0; padding:10px 12px max(10px, env(safe-area-inset-bottom)); background:#0b1020ee; border-top:1px solid var(--line); display:grid; grid-template-columns:1fr auto; gap:8px; backdrop-filter:blur(10px); }
     textarea { width:100%; resize:none; min-height:50px; max-height:150px; padding:12px; border-radius:14px; border:1px solid var(--line); background:#10182c; color:var(--text); outline:none; }
     textarea:focus { border-color:var(--accent); }
@@ -105,6 +118,22 @@
     return el;
   }
 
+  function addThinkingMessage() {
+    const el = document.createElement('div');
+    el.className = 'msg ai';
+    el.setAttribute('aria-label', 'AIが考え中です');
+    el.innerHTML = `
+      <div class="thinking">
+        <span class="thinking-label">考え中</span>
+        <span class="thinking-dots" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
+      </div>`;
+    chat.appendChild(el);
+    requestAnimationFrame(() => window.scrollTo({ top:document.body.scrollHeight, behavior:'smooth' }));
+    return el;
+  }
+
   function browserNote() {
     const ua = navigator.userAgent;
     const mobile = /Android|iPhone|iPad/i.test(ua);
@@ -165,11 +194,12 @@
     messages.push({ role:'user', content:text });
     generating = true;
     setReady(false);
-    statusEl.textContent = '回答を生成中…';
-    const bubble = addMessage('', 'ai');
+    statusEl.textContent = '考え中…';
+    const bubble = addThinkingMessage();
 
     try {
       let full = '';
+      let started = false;
       const stream = await engine.createChatCompletion({
         messages,
         max_tokens: 384,
@@ -181,6 +211,12 @@
       for await (const chunk of stream) {
         const piece = chunk?.choices?.[0]?.delta?.content ?? '';
         if (!piece) continue;
+        if (!started) {
+          started = true;
+          bubble.removeAttribute('aria-label');
+          bubble.textContent = '';
+          statusEl.textContent = '回答を生成中…';
+        }
         full += piece;
         bubble.textContent = full;
         window.scrollTo({ top:document.body.scrollHeight });
