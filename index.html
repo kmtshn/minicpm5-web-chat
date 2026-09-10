@@ -4,69 +4,114 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1020" />
-  <title>MiniCPM-V Web Chat</title>
+  <title>MiniCPM Web Chat</title>
   <style>
     :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark;--bg:#0b1020;--panel:#121a2f;--line:#26314f;--text:#eef3ff;--muted:#9aabc9;--accent:#7aa2ff;--user:#2754a6}
-    *{box-sizing:border-box} html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text)} body{min-height:100dvh} button,textarea{font:inherit}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text)}body{min-height:100dvh}button,textarea,select{font:inherit}
     .app{max-width:820px;margin:0 auto;min-height:100dvh;display:grid;grid-template-rows:auto 1fr auto}
     .top{position:sticky;top:0;z-index:5;padding:14px 16px;border-bottom:1px solid var(--line);background:#0b1020ee;backdrop-filter:blur(10px)}
-    .title-row{display:flex;align-items:center;justify-content:space-between;gap:12px} h1{margin:0;font-size:18px}.badge{font-size:11px;padding:5px 8px;border:1px solid var(--line);border-radius:999px;color:#cdd8f1;white-space:nowrap}.sub{margin-top:4px;font-size:12px;color:var(--muted)}
-    .status{margin-top:10px;font-size:12px;color:#c8d4ef;min-height:18px}.bar{height:6px;background:#1a2440;border-radius:999px;overflow:hidden;margin-top:7px}.bar>div{height:100%;width:0;background:var(--accent);transition:width .2s ease}
-    .chat{padding:16px;display:flex;flex-direction:column;gap:12px;overflow-wrap:anywhere}.msg{max-width:88%;padding:11px 14px;border-radius:16px;white-space:pre-wrap;line-height:1.55;box-shadow:0 4px 16px #0002}.msg.user{align-self:flex-end;background:var(--user);border-bottom-right-radius:5px}.msg.ai{align-self:flex-start;background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:5px}.msg.error{border-color:#7b3b46;color:#ffd4d4}.msg img{display:block;max-width:100%;max-height:320px;border-radius:12px;margin-bottom:9px;object-fit:contain;background:#080d18}
+    .title-row{display:flex;align-items:center;justify-content:space-between;gap:12px}h1{margin:0;font-size:18px}.badge{font-size:11px;padding:5px 8px;border:1px solid var(--line);border-radius:999px;color:#cdd8f1;white-space:nowrap}.sub{margin-top:4px;font-size:12px;color:var(--muted)}
+    .model-row{display:flex;align-items:center;gap:8px;margin-top:10px}.model-row label{font-size:12px;color:var(--muted);white-space:nowrap}.model-select{flex:1;min-width:0;padding:9px 11px;border:1px solid var(--line);border-radius:11px;background:#10182c;color:var(--text);outline:none}.model-select:focus{border-color:var(--accent)}
+    .status{margin-top:9px;font-size:12px;color:#c8d4ef;min-height:18px}.bar{height:6px;background:#1a2440;border-radius:999px;overflow:hidden;margin-top:7px}.bar>div{height:100%;width:0;background:var(--accent);transition:width .2s ease}
+    .chat{padding:16px;display:flex;flex-direction:column;gap:12px;overflow-wrap:anywhere}.msg{max-width:88%;padding:11px 14px;border-radius:16px;white-space:pre-wrap;line-height:1.55;box-shadow:0 4px 16px #0002}.msg.user{align-self:flex-end;background:var(--user);border-bottom-right-radius:5px}.msg.ai{align-self:flex-start;background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:5px}.msg.error{border-color:#7b3b46;color:#ffd4d4}.msg.notice{font-size:12px;color:var(--muted)}.msg img{display:block;max-width:100%;max-height:320px;border-radius:12px;margin-bottom:9px;object-fit:contain;background:#080d18}
     .thinking{display:flex;align-items:center;gap:9px;min-width:104px;color:var(--muted)}.thinking-label{font-size:13px}.thinking-dots{display:flex;align-items:center;gap:4px}.thinking-dots span{width:6px;height:6px;border-radius:50%;background:var(--muted);opacity:.35;animation:thinkingPulse 1.15s infinite ease-in-out}.thinking-dots span:nth-child(2){animation-delay:.15s}.thinking-dots span:nth-child(3){animation-delay:.3s}@keyframes thinkingPulse{0%,70%,100%{transform:translateY(0) scale(.9);opacity:.3}35%{transform:translateY(-4px) scale(1.08);opacity:1}}@media(prefers-reduced-motion:reduce){.thinking-dots span{animation:none;opacity:.65}}
-    .composer{position:sticky;bottom:0;padding:8px 12px max(10px,env(safe-area-inset-bottom));background:#0b1020ee;border-top:1px solid var(--line);display:grid;grid-template-columns:auto 1fr auto;gap:8px;backdrop-filter:blur(10px)}
-    textarea{width:100%;resize:none;min-height:50px;max-height:150px;padding:12px;border-radius:14px;border:1px solid var(--line);background:#10182c;color:var(--text);outline:none} textarea:focus{border-color:var(--accent)}
-    .iconbtn,.send{border:0;border-radius:14px;background:var(--accent);color:#081020;font-weight:750}.iconbtn{width:50px;min-height:50px;font-size:22px}.send{min-width:70px;padding:0 16px} button:disabled,textarea:disabled{opacity:.5}
+    .composer{position:sticky;bottom:0;padding:8px 12px max(10px,env(safe-area-inset-bottom));background:#0b1020ee;border-top:1px solid var(--line);display:grid;grid-template-columns:auto 1fr auto;gap:8px;backdrop-filter:blur(10px)}.composer.text-mode{grid-template-columns:1fr auto}
+    textarea{width:100%;resize:none;min-height:50px;max-height:150px;padding:12px;border-radius:14px;border:1px solid var(--line);background:#10182c;color:var(--text);outline:none}textarea:focus{border-color:var(--accent)}
+    .iconbtn,.send{border:0;border-radius:14px;background:var(--accent);color:#081020;font-weight:750}.iconbtn{width:50px;min-height:50px;font-size:22px}.iconbtn.hidden{display:none}.send{min-width:70px;padding:0 16px}button:disabled,textarea:disabled,select:disabled{opacity:.5}
     .preview{grid-column:1/-1;display:none;align-items:center;gap:10px;padding:8px;background:#10182c;border:1px solid var(--line);border-radius:12px}.preview.show{display:flex}.preview img{width:58px;height:58px;object-fit:cover;border-radius:9px}.preview-meta{min-width:0;flex:1}.preview-name{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.preview-note{font-size:10px;color:var(--muted);margin-top:3px}.remove-image{border:0;background:transparent;color:#cbd7ef;font-size:20px;padding:8px}
     .hint{grid-column:1/-1;display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:11px;color:var(--muted)}.linkbtn{border:0;background:transparent;color:#b9c9ef;padding:2px 0;text-decoration:underline}
-    @media(max-width:520px){.msg{max-width:94%}.badge{display:none}.composer{grid-template-columns:48px 1fr 64px}.iconbtn{width:48px}.send{min-width:64px;padding:0 12px}}
+    @media(max-width:520px){.msg{max-width:94%}.badge{display:none}.composer{grid-template-columns:48px 1fr 64px}.composer.text-mode{grid-template-columns:1fr 64px}.iconbtn{width:48px}.send{min-width:64px;padding:0 12px}.model-row{align-items:stretch;flex-direction:column;gap:5px}}
   </style>
 </head>
 <body>
 <div class="app">
   <header class="top">
-    <div class="title-row"><h1>MiniCPM-V Web Chat</h1><span class="badge">画像対応 / APIキー不要</span></div>
-    <div class="sub">MiniCPM-V 4.6 Q4_K_M · 画像＋テキストを端末内で推論</div>
+    <div class="title-row"><h1 id="pageTitle">MiniCPM Web Chat</h1><span class="badge" id="modeBadge">APIキー不要 / 端末内推論</span></div>
+    <div class="sub" id="subTitle"></div>
+    <div class="model-row">
+      <label for="modelSelect">使用モデル</label>
+      <select id="modelSelect" class="model-select">
+        <option value="text">MiniCPM5-2B（テキスト）</option>
+        <option value="vision">MiniCPM-V 4.6（画像＋テキスト）</option>
+      </select>
+    </div>
     <div class="status" id="status">起動しています…</div><div class="bar"><div id="progress"></div></div>
   </header>
+
   <main class="chat" id="chat" aria-live="polite"></main>
+
   <form class="composer" id="form">
     <input id="imageInput" type="file" accept="image/*" hidden />
     <button class="iconbtn" id="attach" type="button" disabled aria-label="画像を添付">＋</button>
-    <textarea id="input" rows="2" placeholder="メッセージを入力 / 画像も添付できます" disabled></textarea>
+    <textarea id="input" rows="2" placeholder="メッセージを入力" disabled></textarea>
     <button class="send" id="send" type="submit" disabled>送信</button>
     <div class="preview" id="preview"><img id="previewImg" alt="添付画像"><div class="preview-meta"><div class="preview-name" id="previewName"></div><div class="preview-note">送信前に最大1600pxへ縮小します</div></div><button class="remove-image" id="removeImage" type="button" aria-label="画像を外す">×</button></div>
-    <div class="hint"><span>初回モデル取得 約1.26GB（Q4 + Vision projector）</span><button class="linkbtn" id="clear" type="button">会話を消去</button></div>
+    <div class="hint"><span id="downloadHint"></span><button class="linkbtn" id="clear" type="button">会話を消去</button></div>
   </form>
 </div>
+
 <script type="module">
   import { Wllama } from 'https://cdn.jsdelivr.net/npm/@wllama/wllama@3.6.1/esm/index.js';
+
   const WLLAMA_CONFIG={default:'https://cdn.jsdelivr.net/npm/@wllama/wllama@3.6.1/src/wasm/wllama.wasm'};
-  const MODEL={repo:'ggml-org/MiniCPM-V-4.6-GGUF',quant:'Q4_K_M',mmprojQuant:'Q8_0'};
-  const $=q=>document.querySelector(q),chat=$('#chat'),statusEl=$('#status'),progressEl=$('#progress'),form=$('#form'),input=$('#input'),send=$('#send'),attach=$('#attach'),imageInput=$('#imageInput'),preview=$('#preview'),previewImg=$('#previewImg'),previewName=$('#previewName'),removeImage=$('#removeImage'),clearBtn=$('#clear');
-  let engine=null,generating=false,pendingImage=null; const displayUrls=[];
-  const messages=[{role:'system',content:'あなたは画像と文章を理解する日本語AIアシスタントです。ユーザーの質問に直接答えてください。原則として日本語で回答してください。思考過程、内部推論、メタ説明、タスク確認文は回答に含めないでください。画像がある場合は画像を実際に確認し、見えている内容に基づいて回答してください。画像にない情報を推測して断定しないでください。質問が画像説明なら、主要な対象・画面・文字・状況を簡潔に説明してください。'}];
+  const MODELS={
+    text:{
+      label:'MiniCPM5-2B（テキスト）',subtitle:'MiniCPM5-2B Q4_K_M · テキスト専用を端末内で推論',badge:'テキスト / APIキー不要',hint:'初回モデル取得 約1.56GB',
+      system:'あなたは親切で正確なAIアシスタントです。原則として日本語で、簡潔かつ分かりやすく回答してください。思考過程、内部推論、メタ説明は出さず、ユーザーへの最終回答だけを返してください。',
+      hf:{repo:'openbmb/MiniCPM5-2B-GGUF',file:'MiniCPM5-2B-Q4_K_M.gguf'},multimodal:false,maxTokens:384,temperature:.65
+    },
+    vision:{
+      label:'MiniCPM-V 4.6（画像＋テキスト）',subtitle:'MiniCPM-V 4.6 Q4_K_M · 画像＋テキストを端末内で推論',badge:'画像対応 / APIキー不要',hint:'初回モデル取得 約1.26GB（Q4 + Vision projector）',
+      system:'あなたは画像と文章を理解する日本語AIアシスタントです。ユーザーの質問に直接答えてください。原則として日本語で回答してください。思考過程、内部推論、メタ説明、タスク確認文は回答に含めないでください。画像がある場合は実際に画像を確認し、見えている内容に基づいて回答してください。画像にない情報を推測して断定しないでください。',
+      hf:{repo:'ggml-org/MiniCPM-V-4.6-GGUF',quant:'Q4_K_M',mmprojQuant:'Q8_0'},multimodal:true,maxTokens:512,temperature:.55
+    }
+  };
   const VISION_INSTRUCTION='画像をよく確認し、ユーザーの質問そのものに直接答えてください。思考過程や「まず確認します」などのメタ説明は書かず、最終回答だけを日本語で返してください。';
-  function setReady(v){input.disabled=!v;send.disabled=!v;attach.disabled=!v}
-  function addMessage(text,role,extra=''){const el=document.createElement('div');el.className=`msg ${role} ${extra}`.trim();el.textContent=text;chat.appendChild(el);scrollDown();return el}
-  function addUserMessage(text,imageUrl){const el=document.createElement('div');el.className='msg user';if(imageUrl){const img=document.createElement('img');img.src=imageUrl;img.alt='添付画像';el.appendChild(img)}if(text){const t=document.createElement('div');t.textContent=text;el.appendChild(t)}chat.appendChild(el);scrollDown();return el}
-  function addThinkingMessage(){const el=document.createElement('div');el.className='msg ai';el.setAttribute('aria-label','AIが考え中です');el.innerHTML='<div class="thinking"><span class="thinking-label">考え中</span><span class="thinking-dots" aria-hidden="true"><span></span><span></span><span></span></span></div>';chat.appendChild(el);scrollDown();return el}
-  function scrollDown(){requestAnimationFrame(()=>window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}))}
+
+  const $=q=>document.querySelector(q),chat=$('#chat'),statusEl=$('#status'),progressEl=$('#progress'),form=$('#form'),composer=$('#form'),input=$('#input'),send=$('#send'),attach=$('#attach'),imageInput=$('#imageInput'),preview=$('#preview'),previewImg=$('#previewImg'),previewName=$('#previewName'),removeImage=$('#removeImage'),clearBtn=$('#clear'),modelSelect=$('#modelSelect'),subTitle=$('#subTitle'),modeBadge=$('#modeBadge'),downloadHint=$('#downloadHint');
+  let currentModelId=localStorage.getItem('minicpm-model')||'text';
+  if(!MODELS[currentModelId])currentModelId='text';
+  modelSelect.value=currentModelId;
+  let engine=null,generating=false,pendingImage=null,loadSeq=0;
+  const messages=[],displayUrls=[];
+
+  function model(){return MODELS[currentModelId]}
   function browserNote(){const mobile=/Android|iPhone|iPad/i.test(navigator.userAgent),gpu=!!navigator.gpu;return `${mobile?'モバイル端末':'PC'} / ${gpu?'WebGPU利用可能':'WASMで実行'}`}
+  function scrollDown(){requestAnimationFrame(()=>window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}))}
+  function addMessage(text,role,extra=''){const el=document.createElement('div');el.className=`msg ${role} ${extra}`.trim();el.textContent=text;chat.appendChild(el);scrollDown();return el}
+  function addUserMessage(text,imageUrl){const el=document.createElement('div');el.className='msg user';if(imageUrl){const img=document.createElement('img');img.src=imageUrl;img.alt='添付画像';el.appendChild(img)}if(text){const t=document.createElement('div');t.textContent=text;el.appendChild(t)}chat.appendChild(el);scrollDown()}
+  function addThinking(){const el=document.createElement('div');el.className='msg ai';el.setAttribute('aria-label','AIが考え中です');el.innerHTML='<div class="thinking"><span class="thinking-label">考え中</span><span class="thinking-dots" aria-hidden="true"><span></span><span></span><span></span></span></div>';chat.appendChild(el);scrollDown();return el}
+  function setReady(v){input.disabled=!v;send.disabled=!v;attach.disabled=!v||!model().multimodal;modelSelect.disabled=!v||generating}
+  function applyModelUI(){const m=model();subTitle.textContent=m.subtitle;modeBadge.textContent=m.badge;downloadHint.textContent=m.hint;input.placeholder=m.multimodal?'メッセージを入力 / 画像も添付できます':'メッセージを入力';attach.classList.toggle('hidden',!m.multimodal);composer.classList.toggle('text-mode',!m.multimodal)}
   function clearPendingImage(){if(pendingImage?.previewUrl)URL.revokeObjectURL(pendingImage.previewUrl);pendingImage=null;imageInput.value='';preview.classList.remove('show');previewImg.removeAttribute('src');previewName.textContent=''}
-  async function compressImage(file){const src=URL.createObjectURL(file);try{const img=new Image();img.src=src;await img.decode();const max=1600,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale));const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;canvas.getContext('2d').drawImage(img,0,0,w,h);const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('画像変換に失敗しました')),'image/jpeg',0.88));return {data:await blob.arrayBuffer(),blob}}finally{URL.revokeObjectURL(src)}}
-  async function init(){try{setReady(false);statusEl.textContent=`ランタイム初期化中… ${browserNote()}`;engine=new Wllama(WLLAMA_CONFIG,{parallelDownloads:3,allowOffline:true});await engine.loadModelFromHF(MODEL,{n_ctx:2048,n_threads:1,jinja:true,progressCallback:p=>{const loaded=p.loaded??p.loadedBytes??0,total=p.total??p.totalBytes??0;if(total>0){const pct=Math.max(0,Math.min(100,Math.round(loaded/total*100)));progressEl.style.width=`${pct}%`;statusEl.textContent=`モデルとVisionを準備中… ${pct}%`}}});progressEl.style.width='100%';const vision=engine.supportInputModality?.('image');statusEl.textContent=`準備完了 — ${browserNote()}${vision===false?' / 画像入力未検出':''}`;setReady(true);addMessage('準備できました。テキストだけでなく、＋ボタンから写真を添付して質問できます。画像も端末内で処理します。','ai');input.focus()}catch(err){console.error(err);statusEl.textContent='初期化に失敗しました';addMessage(`モデルを起動できませんでした。\n\n${err?.message??err}`,'ai','error')}}
-  attach.addEventListener('click',()=>imageInput.click());
-  imageInput.addEventListener('change',async()=>{const file=imageInput.files?.[0];if(!file)return;try{statusEl.textContent='画像を準備中…';const {data,blob}=await compressImage(file);clearPendingImage();const previewUrl=URL.createObjectURL(blob);pendingImage={data,previewUrl,name:file.name};previewImg.src=previewUrl;previewName.textContent=file.name;preview.classList.add('show');statusEl.textContent=`準備完了 — ${browserNote()}`}catch(err){console.error(err);clearPendingImage();addMessage(`画像を読み込めませんでした: ${err?.message??err}`,'ai','error')}});
+  function sanitizeImageHistory(){for(let i=0;i<messages.length;i++){const msg=messages[i];if(Array.isArray(msg.content)){const text=msg.content.find(x=>x.type==='text')?.text||'[画像付き質問]';messages[i]={role:msg.role,content:`[以前の画像付き質問] ${text.replace(VISION_INSTRUCTION,'').trim()}`}}}}
+  function historyForCurrentModel(){const sys={role:'system',content:model().system};if(model().multimodal)return[sys,...messages];return[sys,...messages.map(msg=>Array.isArray(msg.content)?{role:msg.role,content:'[画像付き質問] '+(msg.content.find(x=>x.type==='text')?.text||'')} : msg)]}
+  async function disposeEngine(){if(!engine)return;const old=engine;engine=null;try{await old.exit()}catch(err){console.warn('モデル解放に失敗',err)}}
+
+  async function compressImage(file){const src=URL.createObjectURL(file);try{const img=new Image();img.src=src;await img.decode();const max=1600,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale));const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;canvas.getContext('2d').drawImage(img,0,0,w,h);const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('画像変換に失敗しました')),'image/jpeg',.88));return{data:await blob.arrayBuffer(),blob}}finally{URL.revokeObjectURL(src)}}
+
+  async function loadCurrentModel(initial=false){const seq=++loadSeq,m=model();applyModelUI();clearPendingImage();setReady(false);progressEl.style.width='0%';statusEl.textContent=`モデル切替中… ${browserNote()}`;await disposeEngine();if(seq!==loadSeq)return;const next=new Wllama(WLLAMA_CONFIG,{parallelDownloads:3,allowOffline:true});try{const opts={n_ctx:2048,n_threads:1,progressCallback:p=>{if(seq!==loadSeq)return;const loaded=p.loaded??p.loadedBytes??0,total=p.total??p.totalBytes??0;let pct=null;if(total>0)pct=Math.round(loaded/total*100);else if(typeof p.progress==='number')pct=Math.round(p.progress*100);if(pct!==null){pct=Math.max(0,Math.min(100,pct));progressEl.style.width=`${pct}%`;statusEl.textContent=`${m.multimodal?'モデルとVision':'モデル'}を準備中… ${pct}%`}}};if(m.multimodal)opts.jinja=true;await next.loadModelFromHF(m.hf,opts);if(seq!==loadSeq){try{await next.exit()}catch{}return}engine=next;progressEl.style.width='100%';const vision=m.multimodal?engine.supportInputModality?.('image'):false;statusEl.textContent=`準備完了 — ${browserNote()}${m.multimodal&&vision===false?' / 画像入力未検出':''}`;setReady(true);if(initial)addMessage(`${m.label} を読み込みました。${m.multimodal?'＋ボタンから画像も添付できます。':'テキストチャット用です。'}`,'ai');else addMessage(`モデルを ${m.label} に切り替えました。`,'ai','notice');input.focus()}catch(err){console.error(err);try{await next.exit()}catch{}statusEl.textContent='初期化に失敗しました';addMessage(`モデルを起動できませんでした。\n\n${err?.message??err}`,'ai','error')}}
+
+  attach.addEventListener('click',()=>{if(model().multimodal)imageInput.click()});
+  imageInput.addEventListener('change',async()=>{const file=imageInput.files?.[0];if(!file||!model().multimodal)return;try{statusEl.textContent='画像を準備中…';const{data,blob}=await compressImage(file);clearPendingImage();const previewUrl=URL.createObjectURL(blob);pendingImage={data,previewUrl,name:file.name};previewImg.src=previewUrl;previewName.textContent=file.name;preview.classList.add('show');statusEl.textContent=`準備完了 — ${browserNote()}`}catch(err){console.error(err);clearPendingImage();addMessage(`画像を読み込めませんでした: ${err?.message??err}`,'ai','error')}});
   removeImage.addEventListener('click',clearPendingImage);
-  form.addEventListener('submit',async ev=>{ev.preventDefault();if(!engine||generating)return;let text=input.value.trim();if(!text&&!pendingImage)return;if(!text&&pendingImage)text='この画像について説明してください。';const image=pendingImage;input.value='';let displayUrl=null;if(image){displayUrl=URL.createObjectURL(new Blob([image.data],{type:'image/jpeg'}));displayUrls.push(displayUrl)}addUserMessage(text,displayUrl);clearPendingImage();
-    let userMessage;if(image){for(let i=messages.length-1;i>=0;i--){if(Array.isArray(messages[i].content)){const oldText=messages[i].content.find(x=>x.type==='text')?.text??'[画像付きメッセージ]';messages[i]={role:messages[i].role,content:`[以前の画像付き質問] ${oldText}`};break}}const promptedText=`${VISION_INSTRUCTION}\n\nユーザーの質問: ${text}`;userMessage={role:'user',content:[{type:'image',data:image.data},{type:'text',text:promptedText}]};}else userMessage={role:'user',content:text};messages.push(userMessage);generating=true;setReady(false);statusEl.textContent=image?'画像を解析中…':'考え中…';const bubble=addThinkingMessage();
-    try{let full='',started=false;const stream=await engine.createChatCompletion({messages,max_tokens:512,temperature:.55,top_p:.9,stream:true});for await(const chunk of stream){const piece=chunk?.choices?.[0]?.delta?.content??'';if(!piece)continue;if(!started){started=true;bubble.removeAttribute('aria-label');bubble.textContent='';statusEl.textContent='回答を生成中…'}full+=piece;bubble.textContent=full;window.scrollTo({top:document.body.scrollHeight})}full=full.trim()||'（応答がありませんでした）';bubble.textContent=full;messages.push({role:'assistant',content:full});statusEl.textContent=`準備完了 — ${browserNote()}`}
+
+  modelSelect.addEventListener('change',async()=>{if(generating){modelSelect.value=currentModelId;return}currentModelId=modelSelect.value;localStorage.setItem('minicpm-model',currentModelId);if(!model().multimodal)sanitizeImageHistory();await loadCurrentModel(false)});
+
+  form.addEventListener('submit',async ev=>{ev.preventDefault();if(!engine||generating)return;const m=model();let text=input.value.trim();if(!text&&!pendingImage)return;if(!text&&pendingImage)text='この画像について説明してください。';const image=m.multimodal?pendingImage:null;input.value='';let displayUrl=null;if(image){displayUrl=URL.createObjectURL(new Blob([image.data],{type:'image/jpeg'}));displayUrls.push(displayUrl)}addUserMessage(text,displayUrl);clearPendingImage();
+    if(image){for(let i=0;i<messages.length;i++){if(Array.isArray(messages[i].content)){const oldText=messages[i].content.find(x=>x.type==='text')?.text||'[画像付き質問]';messages[i]={role:messages[i].role,content:`[以前の画像付き質問] ${oldText.replace(VISION_INSTRUCTION,'').trim()}`}}}}
+    const userMessage=image?{role:'user',content:[{type:'image',data:image.data},{type:'text',text:`${VISION_INSTRUCTION}\n\nユーザーの質問: ${text}` }]}:{role:'user',content:text};
+    const requestMessages=[...historyForCurrentModel(),userMessage];generating=true;setReady(false);statusEl.textContent=image?'画像を解析中…':'考え中…';const bubble=addThinking();
+    try{let full='',started=false;const stream=await engine.createChatCompletion({messages:requestMessages,max_tokens:m.maxTokens,temperature:m.temperature,top_p:.9,stream:true});for await(const chunk of stream){const piece=chunk?.choices?.[0]?.delta?.content??'';if(!piece)continue;if(!started){started=true;bubble.removeAttribute('aria-label');bubble.textContent='';statusEl.textContent='回答を生成中…'}full+=piece;bubble.textContent=full;window.scrollTo({top:document.body.scrollHeight})}full=full.trim()||'（応答がありませんでした）';bubble.textContent=full;messages.push(userMessage,{role:'assistant',content:full});statusEl.textContent=`準備完了 — ${browserNote()}`}
     catch(err){console.error(err);bubble.classList.add('error');bubble.textContent=`生成エラー: ${err?.message??err}`;statusEl.textContent='生成エラー'}finally{generating=false;setReady(true);input.focus()}
   });
+
   input.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&!ev.shiftKey&&!ev.isComposing){ev.preventDefault();form.requestSubmit()}});
-  clearBtn.addEventListener('click',()=>{messages.splice(1);chat.innerHTML='';displayUrls.splice(0).forEach(URL.revokeObjectURL);clearPendingImage();addMessage('会話履歴を消去しました。','ai')});
-  init();
+  clearBtn.addEventListener('click',()=>{messages.splice(0);chat.innerHTML='';displayUrls.splice(0).forEach(URL.revokeObjectURL);clearPendingImage();addMessage('会話履歴を消去しました。','ai')});
+  window.addEventListener('pagehide',()=>{if(engine)engine.exit().catch(()=>{})});
+
+  applyModelUI();
+  loadCurrentModel(true);
 </script>
 </body>
 </html>
