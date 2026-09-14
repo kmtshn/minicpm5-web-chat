@@ -1,0 +1,13 @@
+{
+  "id": "./",
+  "name": "MiniCPM Local AI Appliance",
+  "short_name": "Local AI",
+  "description": "会話もファイルも端末内で処理するAIワークスペース",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0d1919",
+  "theme_color": "#102b29",
+  "icons": [{"src":"./icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
