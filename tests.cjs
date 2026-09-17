@@ -7,11 +7,13 @@ const path = require("node:path");
 const read = (name) => fs.readFileSync(path.join(__dirname, name), "utf8");
 const html = read("index.html");
 const app = read("app.js");
+const thinking = read("thinking-ui.js");
 const sw = read("sw.js");
 
 test("UI is split into static HTML, CSS and module app", () => {
   assert.match(html, /href="\.\/styles\.css"/);
   assert.match(html, /src="\.\/app\.js"/);
+  assert.match(html, /src="\.\/thinking-ui\.js"/);
   assert.match(html, /MiniCPM5-2B · WebGPU優先/);
   assert.match(html, /MiniCPM-V 4\.6 · 画像対応/);
 });
@@ -55,9 +57,20 @@ test("conversation storage stays in IndexedDB", () => {
   assert.doesNotMatch(app, /api\.openai\.com|generativelanguage\.googleapis\.com|api\.anthropic\.com/i);
 });
 
-test("service worker caches the new app shell", () => {
-  assert.match(sw, /minicpm-webgpu-v2/);
+test("thinking display defaults to hidden and can be switched on", () => {
+  assert.match(html, /id="thinkingDisplay"/);
+  assert.match(html, /value="hide" selected>OFF · 回答だけ/);
+  assert.match(html, /value="show">ON · 思考も表示/);
+  assert.match(thinking, /STORAGE_KEY = "thinking-display"/);
+  assert.match(thinking, /hideThinking/);
+  assert.match(thinking, /showThinking/);
+  assert.match(thinking, /MutationObserver/);
+});
+
+test("service worker caches the complete app shell", () => {
+  assert.match(sw, /minicpm-webgpu-v3/);
   assert.match(sw, /"\.\/styles\.css"/);
   assert.match(sw, /"\.\/app\.js"/);
+  assert.match(sw, /"\.\/thinking-ui\.js"/);
   assert.match(sw, /cache\.addAll\(SHELL\)/);
 });

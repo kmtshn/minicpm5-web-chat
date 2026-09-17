@@ -59,6 +59,13 @@
             <option value="vision">MiniCPM-V 4.6 · 画像対応</option>
           </select>
         </label>
+        <label>
+          思考表示
+          <select id="thinkingDisplay">
+            <option value="hide" selected>OFF · 回答だけ</option>
+            <option value="show">ON · 思考も表示</option>
+          </select>
+        </label>
         <button id="loadModel" class="primary">モデルを準備</button>
         <button id="unloadModel">モデル解放</button>
         <button id="install" hidden>アプリとして追加</button>
@@ -142,5 +149,6 @@
   </section>
 </div>
 <script type="module" src="./app.js"></script>
+<script type="module" src="./thinking-ui.js"></script>
 </body>
 </html>
