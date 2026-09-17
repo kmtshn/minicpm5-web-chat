@@ -6,14 +6,17 @@ const path = require("node:path");
 
 const read = (name) => fs.readFileSync(path.join(__dirname, name), "utf8");
 const html = read("index.html");
+const styles = read("styles.css");
 const app = read("app.js");
 const thinking = read("thinking-ui.js");
+const mobile = read("mobile-ui.js");
 const sw = read("sw.js");
 
 test("UI is split into static HTML, CSS and module app", () => {
   assert.match(html, /href="\.\/styles\.css"/);
   assert.match(html, /src="\.\/app\.js"/);
   assert.match(html, /src="\.\/thinking-ui\.js"/);
+  assert.match(html, /src="\.\/mobile-ui\.js"/);
   assert.match(html, /MiniCPM5-2B · WebGPU優先/);
   assert.match(html, /MiniCPM-V 4\.6 · 画像対応/);
 });
@@ -67,10 +70,22 @@ test("thinking display defaults to hidden and can be switched on", () => {
   assert.match(thinking, /MutationObserver/);
 });
 
+test("mobile layout prioritizes chat input and compact controls", () => {
+  assert.match(html, /id="historyPanel"/);
+  assert.match(html, /class="muted file-types"/);
+  assert.match(mobile, /max-width: 800px/);
+  assert.match(mobile, /historyPanel\.open = false/);
+  assert.match(mobile, /Math\.min\(Math\.max\(input\.scrollHeight, 52\), 152\)/);
+  assert.match(styles, /\.quick-actions\{flex-wrap:nowrap;overflow-x:auto/);
+  assert.match(styles, /\.file-types\{display:none\}/);
+  assert.match(styles, /#send\{min-width:78px;height:44px/);
+});
+
 test("service worker caches the complete app shell", () => {
-  assert.match(sw, /minicpm-webgpu-v3/);
+  assert.match(sw, /minicpm-webgpu-v4/);
   assert.match(sw, /"\.\/styles\.css"/);
   assert.match(sw, /"\.\/app\.js"/);
   assert.match(sw, /"\.\/thinking-ui\.js"/);
+  assert.match(sw, /"\.\/mobile-ui\.js"/);
   assert.match(sw, /cache\.addAll\(SHELL\)/);
 });

@@ -52,6 +52,7 @@ progress{width:100%;height:5px;margin-top:8px;accent-color:var(--accent)}
 .settings{padding:14px 30px;border-bottom:1px solid var(--line)}
 .setting-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px}
 .setting-grid label{display:grid;gap:6px;font-size:12px}
+.setting-grid input,.setting-grid select{width:100%;min-width:0}
 .info-block{margin-top:14px;white-space:pre-wrap}
 .note{margin-top:10px;padding:11px 13px;border-radius:11px;background:var(--panel-2);font-size:12px;line-height:1.6}
 .chat{flex:1;padding:24px 30px;display:flex;flex-direction:column;gap:16px}
@@ -72,13 +73,85 @@ progress{width:100%;height:5px;margin-top:8px;accent-color:var(--accent)}
 .dragging{outline:4px dashed var(--accent);outline-offset:-7px}
 .error{color:var(--danger)}
 [hidden]{display:none!important}
+
 @media(max-width:800px){
-  .app-shell{grid-template-columns:1fr}
-  .sidebar{border-right:0;border-bottom:1px solid var(--line);padding:15px}
+  html,body{overscroll-behavior-y:none}
+  .app-shell{display:block;min-height:100dvh;max-width:none}
+
+  .sidebar{
+    position:sticky;top:0;z-index:50;
+    display:grid;grid-template-columns:minmax(0,1fr) 44px;align-items:center;
+    gap:8px;padding:8px 10px;border-right:0;border-bottom:1px solid var(--line);
+    background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(16px)
+  }
+  .sidebar>div:first-child{min-width:0}
+  .sidebar>div:first-child .eyebrow,.sidebar>div:first-child p{display:none}
+  .sidebar h1{font-size:16px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #newChat{width:44px;height:44px;padding:0;font-size:0;justify-self:end}
+  #newChat::after{content:"＋";font-size:24px;line-height:1}
+  .sidebar details{grid-column:1/-1}
+  .sidebar details summary{padding:7px 2px}
+  .history{max-height:28vh;margin-top:7px}
+  .sidebar-actions{display:none;grid-column:1/-1;grid-template-columns:repeat(4,1fr);gap:6px}
+  .sidebar details[open]~.sidebar-actions{display:grid}
+  .sidebar-actions button{padding:8px 5px;font-size:11px}
   .sidebar .privacy-card{display:none}
-  .history{max-height:140px}
-  .topbar,.settings,.chat,.composer{padding-left:16px;padding-right:16px}
-  .welcome{margin:24px 0}
-  .welcome h3{font-size:24px}
-  .message{max-width:100%}
+
+  .main{min-height:calc(100dvh - 61px)}
+  .topbar{padding:10px 12px 8px}
+  .title-row .eyebrow{display:none}
+  .title-row h2{font-size:18px;letter-spacing:-.4px}
+  .badge{max-width:48vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 8px;font-size:10px}
+
+  .toolbar{margin-top:10px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+  .toolbar label{gap:4px;font-size:10px;min-width:0}
+  .toolbar select{width:100%;min-width:0;padding:9px 8px;font-size:13px}
+  #loadModel,#unloadModel{min-height:40px;padding:8px 10px;font-size:13px}
+  #install{grid-column:1/-1}
+
+  .capabilities{margin-top:8px;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:12px;padding-bottom:2px;white-space:nowrap;scrollbar-width:none}
+  .capabilities::-webkit-scrollbar{display:none}
+  .capabilities span{flex:0 0 auto;font-size:10px}
+  .status{margin-top:7px;font-size:11px;line-height:1.4;max-height:3em;overflow:auto}
+  progress{height:4px;margin-top:5px}
+
+  .settings{padding:9px 12px}
+  .settings summary{font-size:12px}
+  .setting-grid{grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .setting-grid label{font-size:10px;gap:4px}
+  .setting-grid input,.setting-grid select{padding:9px 8px;font-size:13px}
+  .info-block{margin-top:10px}
+  .note{font-size:11px;padding:9px 10px}
+
+  .chat{padding:12px 10px;gap:10px}
+  .welcome{margin:18px 4px}
+  .welcome h3{font-size:22px}
+  .message{padding:12px 14px;border-radius:14px;font-size:15px;line-height:1.65;box-shadow:none}
+  .message.user{max-width:92%;align-self:flex-end}
+  .message.assistant{max-width:100%;align-self:stretch}
+
+  .composer{
+    z-index:60;padding:8px 10px max(8px,env(safe-area-inset-bottom));
+    box-shadow:0 -8px 24px color-mix(in srgb,var(--text) 8%,transparent)
+  }
+  .quick-actions{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;padding-bottom:2px}
+  .quick-actions::-webkit-scrollbar{display:none}
+  .quick-actions button{flex:0 0 auto;white-space:nowrap;padding:8px 12px;border-radius:999px;scroll-snap-align:start}
+  .attachments{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .attachments::-webkit-scrollbar{display:none}
+  .attachments span{flex:0 0 auto}
+  .composer textarea{min-height:52px;height:52px;max-height:152px;resize:none;margin:8px 0;padding:12px 14px;border-radius:16px;font-size:16px;line-height:1.45}
+  .composer-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+  .composer-row>div:first-child{min-width:0;display:flex;align-items:center}
+  .file-types{display:none}
+  #attach{height:44px;padding:0 14px;white-space:nowrap}
+  .send-row{gap:6px;flex-wrap:nowrap}
+  #send{min-width:78px;height:44px;padding:0 18px;border-radius:14px;font-size:16px}
+  #stop{height:44px;padding:0 12px;white-space:nowrap}
+}
+
+@media(max-width:420px){
+  .toolbar{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}
+  .setting-grid{grid-template-columns:1fr 1fr}
+  .message{font-size:14.5px}
 }

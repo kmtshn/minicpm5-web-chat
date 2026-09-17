@@ -1,4 +1,4 @@
-const CACHE = "minicpm-webgpu-v3";
+const CACHE = "minicpm-webgpu-v4";
 const BASE = new URL("./", self.location.href);
 const SHELL = [
   "./",
@@ -6,6 +6,7 @@ const SHELL = [
   "./styles.css",
   "./app.js",
   "./thinking-ui.js",
+  "./mobile-ui.js",
   "./manifest.webmanifest",
   "./icon.svg",
 ].map((p) => new URL(p, BASE).href);
