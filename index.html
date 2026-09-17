@@ -19,9 +19,9 @@
       <p class="muted">ブラウザ内で動く、ローカルAIワークスペース</p>
     </div>
 
-    <button id="newChat" class="wide">＋ 新しい会話</button>
+    <button id="newChat" class="wide" aria-label="新しい会話">＋ 新しい会話</button>
 
-    <details open>
+    <details id="historyPanel" open>
       <summary>会話履歴</summary>
       <div id="history" class="history"></div>
     </details>
@@ -51,7 +51,7 @@
       </div>
 
       <div class="toolbar">
-        <label>
+        <label class="model-control">
           モデル
           <select id="modelSelect">
             <option value="auto">AUTO · 添付に合わせる</option>
@@ -59,7 +59,7 @@
             <option value="vision">MiniCPM-V 4.6 · 画像対応</option>
           </select>
         </label>
-        <label>
+        <label class="thinking-control">
           思考表示
           <select id="thinkingDisplay">
             <option value="hide" selected>OFF · 回答だけ</option>
@@ -136,8 +136,8 @@
       <textarea id="input" rows="3" placeholder="ここに入力。ファイルはドラッグ＆ドロップでも追加できます。"></textarea>
       <div class="composer-row">
         <div>
-          <button id="attach" type="button">＋ ファイル・画像</button>
-          <span class="muted">TXT / MD / CSV / JSON / LOG / TSV / PDF / 画像</span>
+          <button id="attach" type="button">＋ 添付</button>
+          <span class="muted file-types">TXT / MD / CSV / JSON / LOG / TSV / PDF / 画像</span>
         </div>
         <div class="send-row">
           <button id="stop" type="button" hidden>■ 停止</button>
@@ -150,5 +150,6 @@
 </div>
 <script type="module" src="./app.js"></script>
 <script type="module" src="./thinking-ui.js"></script>
+<script type="module" src="./mobile-ui.js"></script>
 </body>
 </html>
