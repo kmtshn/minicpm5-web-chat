@@ -391,14 +391,15 @@ async function generateWllama(messages, imageBlob, options, onText) {
   const user = messages[messages.length - 1];
   const requestMessages = messages.slice(0, -1);
   const disableThinking = loadedModel === "ternary";
+  const requestUserText = disableThinking ? `${user.content}\n/no_think` : user.content;
 
-  let finalUser = user;
+  let finalUser = { role: user.role, content: requestUserText };
   if (imageBlob) {
     finalUser = {
       role: "user",
       content: [
         { type: "image", data: await imageBlob.arrayBuffer() },
-        { type: "text", text: user.content },
+        { type: "text", text: requestUserText },
       ],
     };
   }
