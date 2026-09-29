@@ -57,7 +57,7 @@
             <option value="auto">AUTO · 添付に合わせる</option>
             <option value="text">MiniCPM5-2B · WebGPU優先</option>
             <option value="vision">MiniCPM-V 4.6 · 画像対応</option>
-            <option value="ternary">Ternary Bonsai 4B · 軽量WASM</option>
+            <option value="ternary">Ternary Bonsai 4B · wllama GPU優先</option>
           </select>
         </label>
         <label class="thinking-control">
@@ -127,7 +127,7 @@
         テキストモデルは <b>Transformers.js 4.3.0 + ONNX Runtime WebGPU</b> を優先。
         WebGPU / shader-f16 が使えない場合は MiniCPM5-2B GGUF を wllama/WASM で実行します。
         画像モデルは現時点では MiniCPM-V 4.6 GGUF を wllama で実行します。
-        Ternary Bonsai 4Bは公式Q2_0 group-64 GGUFをwllama/WASMで実行します。4GB RAM端末ではContext 2048を推奨します。
+        Ternary Bonsai 4Bは公式Q2_0 group-64 GGUFをwllamaで実行します。対応環境ではGPUを優先し、速度優先のため内部思考は無効化します。4GB RAM端末ではContext 2048を推奨します。
       </div>
     </details>
 
