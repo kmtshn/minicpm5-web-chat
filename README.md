@@ -59,6 +59,23 @@
 
 `main` ブランチをPages公開する場合は通常どおりルート `/` を指定してください。
 
+## Cloudflare Pages版（推奨）
+
+GitHub Pagesでは設定できないCOOP / COEPヘッダーを、Cloudflare Pagesの`_headers`で付与します。これにより、wllamaがSharedArrayBufferを使える環境ではマルチスレッド実行へ切り替えられます。
+
+追加したファイル:
+
+- `_headers` — Cloudflare Pages用のCross-Origin Isolation設定
+- `wrangler.jsonc` — ルートをそのままPagesへ公開する設定
+
+CloudflareダッシュボードのGit連携でこのリポジトリを接続し、ビルドコマンドなし・出力ディレクトリ `.` で公開できます。Direct Uploadの場合は、プロジェクト作成後に次を実行します。
+
+```bash
+npx wrangler pages project create minicpm5-web-chat
+npx wrangler pages deploy . --project-name=minicpm5-web-chat
+```
+
+公開後、ブラウザの開発者コンソールで `crossOriginIsolated === true` を確認し、アプリのBackend欄が `SharedArrayBuffer有効` になっていることを確認してください。Cloudflare PagesのDirect Upload手順は[公式ドキュメント](https://developers.cloudflare.com/pages/get-started/direct-upload/)を参照してください。
 ## 主なファイル
 
 - `index.html` — UI
