@@ -119,7 +119,7 @@ async function detectWebGPU() {
     return;
   }
   try {
-    const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
+    const adapter = await navigator.gpu.requestAdapter();
     if (!adapter) throw new Error("GPU adapterを取得できません");
     const fp16 = adapter.features?.has?.("shader-f16") ?? false;
     let info = "";
@@ -173,14 +173,21 @@ function targetModel() {
   return pending.some((p) => p.kind === "image") ? "vision" : "text";
 }
 
+function effectiveWllamaContext(modelKey, requested) {
+  const value = Math.max(512, Number(requested) || 2048);
+  return modelKey === "ternary" && !webgpuCaps.available ? Math.min(value, 1024) : value;
+}
+
 function updateContextRecommendation(modelKey = targetModel()) {
   const hint = $("contextHint");
   const recommended = MODELS[modelKey]?.recommendedContext;
   const isTernary = Number.isInteger(recommended);
+  const cpuFallback = isTernary && !webgpuCaps.available;
 
   if (isTernary && contextAutoRecommended) {
-    $("context").value = String(recommended);
-    setSetting("context", String(recommended));
+    const next = cpuFallback ? 1024 : recommended;
+    $("context").value = String(next);
+    setSetting("context", String(next));
     setSetting("context-auto", "1");
   } else if (!isTernary && contextAutoRecommended && $("context").value === "2048") {
     $("context").value = "4096";
@@ -189,9 +196,11 @@ function updateContextRecommendation(modelKey = targetModel()) {
   }
 
   if (hint) {
-    hint.textContent = isTernary
-      ? "4GB RAM端末では2048を推奨（必要なら設定から変更できます）。"
-      : "端末のメモリに応じて2K / 4K / 8Kを選べます。";
+    hint.textContent = cpuFallback
+      ? "GPUアダプターなしのCPU実行です。BonsaiはContext 1024以下に制限します。"
+      : isTernary
+        ? "GPU対応時は2048を推奨（必要なら設定から変更できます）。"
+        : "端末のメモリに応じて1K / 2K / 4K / 8Kを選べます。";
   }
 }
 
@@ -236,11 +245,16 @@ async function loadWllama(modelKey) {
     parallelDownloads: 2,
     allowOffline: true,
   });
-  const ctx = Number($("context").value);
+  const requestedCtx = Number($("context").value);
+  const ctx = effectiveWllamaContext(modelKey, requestedCtx);
+  const gpuLayers = webgpuCaps.available ? 99999 : 0;
+  if (ctx < requestedCtx) {
+    status(`${config.label} はGPUアダプターがないためContext ${ctx}でCPU実行します…`);
+  }
   try {
     const opts = {
       n_ctx: ctx,
-      n_gpu_layers: 99999,
+      n_gpu_layers: gpuLayers,
       ...(modelKey === "ternary" ? { reasoning: false } : {}),
       ...(modelKey === "vision" || modelKey === "ternary" ? { jinja: true } : {}),
       progressCallback: (p) => {
@@ -270,24 +284,25 @@ async function loadWllama(modelKey) {
     if (modelKey === "vision" && !engine.supportInputModality("image")) {
       throw new Error("このwllama環境では画像入力を利用できません");
     }
-    const wllamaWebGPU = Boolean(engine.isSupportWebGPU?.());
+    const wllamaWebGPU = gpuLayers > 0 && Boolean(engine.isSupportWebGPU?.());
     const multithread = Boolean(engine.isMultithread?.());
     const threads = Number(engine.getNumThreads?.()) || 1;
     const execution = wllamaWebGPU ? "WebGPU + WASM" : "WASM CPU";
     const threading = multithread ? `${threads}スレッド` : "1スレッド";
     const isolation = globalThis.crossOriginIsolated ? "SharedArrayBuffer有効" : "SharedArrayBufferなし";
-
-    runtime = { kind: "WASM", engine, execution, multithread, threads };
-    loadedModel = modelKey;
     loadedContext = engine.getLoadedContextInfo()?.n_ctx || ctx;
+    const contextLabel = `Context ${loadedContext}`;
+
+    runtime = { kind: "WASM", engine, execution, multithread, threads, context: loadedContext };
+    loadedModel = modelKey;
     const backendLabels = {
-      text: `Backend: wllama / ${execution} / ${threading}`,
-      vision: `Backend: wllama / ${execution} / ${threading} (MiniCPM-V 4.6)`,
-      ternary: `Backend: wllama / ${execution} / ${threading} (Ternary-Bonsai-4B / Q2_0_g64)`,
+      text: `Backend: wllama / ${execution} / ${threading} / ${contextLabel}`,
+      vision: `Backend: wllama / ${execution} / ${threading} / ${contextLabel} (MiniCPM-V 4.6)`,
+      ternary: `Backend: wllama / ${execution} / ${threading} / ${contextLabel} (Ternary-Bonsai-4B / Q2_0_g64)`,
     };
-    $("backend").textContent = backendLabels[modelKey] || `Backend: wllama / ${execution} / ${threading}`;
+    $("backend").textContent = backendLabels[modelKey] || `Backend: wllama / ${execution} / ${threading} / ${contextLabel}`;
     progress(100);
-    status(`${config.label} 準備完了。${execution} / ${threading}。${isolation}。`);
+    status(`${config.label} 準備完了。${execution} / ${threading} / ${contextLabel}。${isolation}。`);
   } catch (e) {
     await engine.exit().catch(() => {});
     throw e;
@@ -296,7 +311,7 @@ async function loadWllama(modelKey) {
 
 async function ensureModel() {
   const target = targetModel();
-  const ctx = Number($("context").value);
+  const ctx = effectiveWllamaContext(target, Number($("context").value));
   if (runtime && loadedModel === target && loadedContext === ctx) return true;
 
   await unloadRuntime();
@@ -946,6 +961,7 @@ $("theme").value = getSetting("theme", "system");
 applyTheme($("theme").value);
 updateContextRecommendation(targetModel());
 await detectWebGPU();
+updateContextRecommendation(targetModel());
 await openDB();
 renderAttachments();
 sync();
