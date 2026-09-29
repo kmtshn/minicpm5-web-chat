@@ -132,7 +132,10 @@ async function detectWebGPU() {
     $("fp16").textContent = `shader-f16: ${fp16 ? "利用可能" : "非対応"}`;
     $("deviceInfo").textContent =
       `${info ? `GPU: ${info}\n` : ""}WebGPU API: OK / shader-f16: ${fp16 ? "OK" : "NG"}\n` +
-      (fp16 ? "MiniCPM5-2B ONNX(q4f16)をWebGPUで実行できます。" : "q4f16要件を満たさないため、テキストモデルはWASMへフォールバックします。");
+      (fp16
+        ? "MiniCPM5-2B ONNX(q4f16)をWebGPUで実行できます。"
+        : "q4f16要件を満たさないため、テキストモデルはWASMへフォールバックします。") +
+      "\nBonsai / MiniCPM-Vのwllama実行状態はモデルロード後にBackendへ表示します。";
   } catch (e) {
     webgpuCaps = { available: false, fp16: false, adapter: null, info: "" };
     $("webgpu").textContent = "WebGPU: 利用不可";
@@ -237,7 +240,8 @@ async function loadWllama(modelKey) {
   try {
     const opts = {
       n_ctx: ctx,
-      n_threads: 1,
+      n_gpu_layers: 99999,
+      ...(modelKey === "ternary" ? { reasoning: false } : {}),
       ...(modelKey === "vision" || modelKey === "ternary" ? { jinja: true } : {}),
       progressCallback: (p) => {
         const total = p.total ?? p.totalBytes;
@@ -266,17 +270,24 @@ async function loadWllama(modelKey) {
     if (modelKey === "vision" && !engine.supportInputModality("image")) {
       throw new Error("このwllama環境では画像入力を利用できません");
     }
-    runtime = { kind: "WASM", engine };
+    const wllamaWebGPU = Boolean(engine.isSupportWebGPU?.());
+    const multithread = Boolean(engine.isMultithread?.());
+    const threads = Number(engine.getNumThreads?.()) || 1;
+    const execution = wllamaWebGPU ? "WebGPU + WASM" : "WASM CPU";
+    const threading = multithread ? `${threads}スレッド` : "1スレッド";
+    const isolation = globalThis.crossOriginIsolated ? "SharedArrayBuffer有効" : "SharedArrayBufferなし";
+
+    runtime = { kind: "WASM", engine, execution, multithread, threads };
     loadedModel = modelKey;
     loadedContext = engine.getLoadedContextInfo()?.n_ctx || ctx;
     const backendLabels = {
-      text: "Backend: wllama / WASM (WebGPUフォールバック)",
-      vision: "Backend: wllama / WASM (MiniCPM-V 4.6)",
-      ternary: "Backend: wllama / WASM (Ternary-Bonsai-4B / Q2_0_g64)",
+      text: `Backend: wllama / ${execution} / ${threading}`,
+      vision: `Backend: wllama / ${execution} / ${threading} (MiniCPM-V 4.6)`,
+      ternary: `Backend: wllama / ${execution} / ${threading} (Ternary-Bonsai-4B / Q2_0_g64)`,
     };
-    $("backend").textContent = backendLabels[modelKey] || "Backend: wllama / WASM";
+    $("backend").textContent = backendLabels[modelKey] || `Backend: wllama / ${execution} / ${threading}`;
     progress(100);
-    status(`${config.label} 準備完了。推論は端末内で実行します。`);
+    status(`${config.label} 準備完了。${execution} / ${threading}。${isolation}。`);
   } catch (e) {
     await engine.exit().catch(() => {});
     throw e;
@@ -379,6 +390,7 @@ async function generateWllama(messages, imageBlob, options, onText) {
   let completionTokens = null;
   const user = messages[messages.length - 1];
   const requestMessages = messages.slice(0, -1);
+  const disableThinking = loadedModel === "ternary";
 
   let finalUser = user;
   if (imageBlob) {
@@ -396,6 +408,7 @@ async function generateWllama(messages, imageBlob, options, onText) {
     max_tokens: options.maxTokens,
     temperature: options.temperature,
     top_p: 0.9,
+    ...(disableThinking ? { chat_template_kwargs: { enable_thinking: false } } : {}),
     stream: true,
     stream_options: { include_usage: true },
     abortSignal: controller.signal,
@@ -706,7 +719,7 @@ $("form").onsubmit = async (e) => {
     $("speed").textContent = "—";
     $("tokens").textContent = "—";
     started = performance.now();
-    status(`生成中… (${runtime.kind})`);
+    status(`生成中… (${runtime.kind} / ${runtime.execution || "WebGPU"})`);
 
     const onText = (_piece, aggregate) => {
       if (first === null) {
