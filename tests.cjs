@@ -55,7 +55,7 @@ test("Bonsai avoids hidden reasoning and forced single-thread execution", () => 
   assert.match(app, /n_gpu_layers:\s*99999/);
   assert.match(app, /reasoning: false/);
   assert.match(app, /chat_template_kwargs: \{ enable_thinking: false \}/);
-  assert.match(app, /\\/no_think/);
+  assert.match(app, /\/no_think/);
   assert.match(app, /getNumThreads/);
   assert.doesNotMatch(app, /n_threads:\s*1/);
 });
