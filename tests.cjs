@@ -19,7 +19,7 @@ test("UI is split into static HTML, CSS and module app", () => {
   assert.match(html, /src="\.\/mobile-ui\.js"/);
   assert.match(html, /MiniCPM5-2B · WebGPU優先/);
   assert.match(html, /MiniCPM-V 4\.6 · 画像対応/);
-  assert.match(html, /Ternary Bonsai 4B · 軽量WASM/);
+  assert.match(html, /Ternary Bonsai 4B · wllama GPU優先/);
 });
 
 test("Transformers.js is pinned to the current WebGPU runtime", () => {
@@ -49,6 +49,14 @@ test("Ternary Bonsai 4B uses the current mainline-compatible GGUF path", () => {
   assert.match(app, /recommendedContext: 2048/);
   assert.match(app, /modelKey === "vision" \|\| modelKey === "ternary"/);
   assert.match(app, /await loadWllama\(target\)/);
+});
+
+test("Bonsai avoids hidden reasoning and forced single-thread execution", () => {
+  assert.match(app, /n_gpu_layers:\s*99999/);
+  assert.match(app, /reasoning: false/);
+  assert.match(app, /chat_template_kwargs: \{ enable_thinking: false \}/);
+  assert.match(app, /getNumThreads/);
+  assert.doesNotMatch(app, /n_threads:\s*1/);
 });
 
 test("vision mode remains MiniCPM-V and uses local wllama", () => {
