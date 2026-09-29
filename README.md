@@ -31,6 +31,7 @@
 - 実行ランタイム: `@wllama/wllama@3.6.1`（WebGPU対応時はGPU層を優先、非対応時はWASM CPU）
 - Bonsaiでは速度優先のため内部thinkingを無効化
 - モデルロード後、Backend欄にwllamaのGPU対応状態とスレッド数を表示
+- WebGPUアダプターが取得できない場合はCPU専用へ切り替え、BonsaiのContextを1024に制限
 - `Q2_0_g64` はmainline互換の形式です。旧来のgroup-128 `Ternary-Bonsai-4B-Q2_0.gguf` は新しいランタイムでは使いません。
 - より小さい `PQ2_0` はPrismML fork向けの形式なので、ブラウザ版では配布していません。
 - 4GB RAM端末（Galaxy A25 5Gを想定）では、Bonsai選択時にContextを **2048** へ自動設定します。手動変更した場合はその値を維持します。
