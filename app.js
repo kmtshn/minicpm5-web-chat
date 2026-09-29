@@ -36,6 +36,18 @@ const MODELS = {
     system:
       "あなたは画像と文章を理解する日本語AIアシスタントです。画像に見えている内容を根拠に回答し、見えない情報を断定しないでください。内部推論や思考過程は出力しないでください。",
   },
+  ternary: {
+    label: "Ternary Bonsai 4B",
+    mode: "text",
+    wasm: {
+      repo: "prism-ml/Ternary-Bonsai-4B-gguf",
+      file: "Ternary-Bonsai-4B-Q2_0_g64.gguf",
+      approx: "約1.14GB（公式Q2_0 group-64）",
+    },
+    recommendedContext: 2048,
+    system:
+      "あなたは親切で正確な日本語AIアシスタントです。短く具体的に回答してください。内部推論や思考過程は出力せず、ユーザーへの回答だけを返してください。",
+  },
 };
 
 const WLLAMA_JS = "https://cdn.jsdelivr.net/npm/@wllama/wllama@3.6.1/esm/index.js";
@@ -60,6 +72,7 @@ let db = null;
 let saveQueue = Promise.resolve();
 let stopping = null;
 let stopRequested = false;
+let contextAutoRecommended = true;
 let installPrompt = null;
 const objectUrls = [];
 
@@ -91,7 +104,7 @@ function sync() {
   $("attach").disabled = disabled;
   $("stop").hidden = !busy;
   document.querySelectorAll("#actions button,#attachments button,#history button").forEach((b) => b.disabled = disabled);
-  $("localState").textContent = runtime ? `${loadedModel === "text" ? "MiniCPM5-2B" : "MiniCPM-V 4.6"} / ${runtime.kind}` : "未ロード";
+  $("localState").textContent = runtime ? `${MODELS[loadedModel]?.label || loadedModel} / ${runtime.kind}` : "未ロード";
 }
 function textOf(message) {
   return typeof message?.content === "string" ? message.content : "";
@@ -157,6 +170,28 @@ function targetModel() {
   return pending.some((p) => p.kind === "image") ? "vision" : "text";
 }
 
+function updateContextRecommendation(modelKey = targetModel()) {
+  const hint = $("contextHint");
+  const recommended = MODELS[modelKey]?.recommendedContext;
+  const isTernary = Number.isInteger(recommended);
+
+  if (isTernary && contextAutoRecommended) {
+    $("context").value = String(recommended);
+    setSetting("context", String(recommended));
+    setSetting("context-auto", "1");
+  } else if (!isTernary && contextAutoRecommended && $("context").value === "2048") {
+    $("context").value = "4096";
+    setSetting("context", "4096");
+    setSetting("context-auto", "1");
+  }
+
+  if (hint) {
+    hint.textContent = isTernary
+      ? "4GB RAM端末では2048を推奨（必要なら設定から変更できます）。"
+      : "端末のメモリに応じて2K / 4K / 8Kを選べます。";
+  }
+}
+
 function progressFromHF(event) {
   if (!event) return;
   const pct = Number(event.progress);
@@ -203,7 +238,7 @@ async function loadWllama(modelKey) {
     const opts = {
       n_ctx: ctx,
       n_threads: 1,
-      ...(modelKey === "vision" ? { jinja: true } : {}),
+      ...(modelKey === "vision" || modelKey === "ternary" ? { jinja: true } : {}),
       progressCallback: (p) => {
         const total = p.total ?? p.totalBytes;
         const loaded = p.loaded ?? p.loadedBytes;
@@ -214,9 +249,15 @@ async function loadWllama(modelKey) {
         }
       },
     };
+    const repoNeedle = config.wasm.repo.toUpperCase();
+    const modelNeedle = (config.wasm.file || config.wasm.quant || "Q4_K_M").toUpperCase();
     const cached = (await engine.modelManager.getModels())
-      .find((m) => m.url.includes(config.wasm.repo) && m.url.toUpperCase().includes("Q4_K_M") &&
-        (modelKey !== "vision" || m.mmprojUrl));
+      .find((m) => {
+        const url = String(m.url || "");
+        const upper = url.toUpperCase();
+        return upper.includes(repoNeedle) && upper.includes(modelNeedle) &&
+          (modelKey !== "vision" || m.mmprojUrl);
+      });
     if (cached) {
       await engine.loadModel(cached, opts);
     } else {
@@ -228,9 +269,12 @@ async function loadWllama(modelKey) {
     runtime = { kind: "WASM", engine };
     loadedModel = modelKey;
     loadedContext = engine.getLoadedContextInfo()?.n_ctx || ctx;
-    $("backend").textContent = modelKey === "text"
-      ? "Backend: wllama / WASM (WebGPUフォールバック)"
-      : "Backend: wllama / WASM (MiniCPM-V 4.6)";
+    const backendLabels = {
+      text: "Backend: wllama / WASM (WebGPUフォールバック)",
+      vision: "Backend: wllama / WASM (MiniCPM-V 4.6)",
+      ternary: "Backend: wllama / WASM (Ternary-Bonsai-4B / Q2_0_g64)",
+    };
+    $("backend").textContent = backendLabels[modelKey] || "Backend: wllama / WASM";
     progress(100);
     status(`${config.label} 準備完了。推論は端末内で実行します。`);
   } catch (e) {
@@ -261,7 +305,7 @@ async function ensureModel() {
     return true;
   }
 
-  await loadWllama("vision");
+  await loadWllama(target);
   return true;
 }
 
@@ -608,7 +652,7 @@ $("form").onsubmit = async (e) => {
   const typed = $("input").value.trim();
   const image = pending.find((p) => p.kind === "image");
   if (!typed && !pending.length) return;
-  if (image && targetModel() === "text") {
+  if (image && targetModel() !== "vision") {
     status("画像を使う場合はAUTOまたはMiniCPM-V 4.6を選択してください。", true);
     return;
   }
@@ -845,7 +889,16 @@ $("input").onkeydown = (e) => {
   }
 };
 
-$("context").onchange = () => setSetting("context", $("context").value);
+$("modelSelect").onchange = () => {
+  updateContextRecommendation(targetModel());
+};
+
+$("context").onchange = () => {
+  contextAutoRecommended = false;
+  setSetting("context-auto", "0");
+  setSetting("context", $("context").value);
+  updateContextRecommendation(targetModel());
+};
 $("theme").onchange = () => {
   const v = $("theme").value;
   setSetting("theme", v);
@@ -872,9 +925,12 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./sw.js").catch(console.warn);
 }
 
-$("context").value = getSetting("context", "4096");
+const savedContext = getSetting("context", "");
+contextAutoRecommended = getSetting("context-auto", savedContext ? "0" : "1") === "1";
+$("context").value = savedContext || "4096";
 $("theme").value = getSetting("theme", "system");
 applyTheme($("theme").value);
+updateContextRecommendation(targetModel());
 await detectWebGPU();
 await openDB();
 renderAttachments();

@@ -22,6 +22,19 @@
 - **PWA**
   - GitHub Pagesからインストール可能
 
+## Ternary Bonsai 4B（ブラウザWASM）
+
+モデル選択で **Ternary Bonsai 4B** を選ぶと、既存のwllama経路でテキスト推論を実行できます。
+
+- 配布元: [prism-ml/Ternary-Bonsai-4B-gguf](https://huggingface.co/prism-ml/Ternary-Bonsai-4B-gguf)
+- 使用ファイル: `Ternary-Bonsai-4B-Q2_0_g64.gguf`（公式Q2_0 / group-64、約1.14GB）
+- 実行ランタイム: `@wllama/wllama@3.6.1` のWASM
+- `Q2_0_g64` はmainline互換の形式です。旧来のgroup-128 `Ternary-Bonsai-4B-Q2_0.gguf` は新しいランタイムでは使いません。
+- より小さい `PQ2_0` はPrismML fork向けの形式なので、ブラウザ版では配布していません。
+- 4GB RAM端末（Galaxy A25 5Gを想定）では、Bonsai選択時にContextを **2048** へ自動設定します。手動変更した場合はその値を維持します。
+
+画像を添付した場合は、従来どおりAUTOまたはMiniCPM-V 4.6を使ってください。Ternary Bonsai 4Bはテキスト専用です。
+
 ## 推奨環境
 
 最優先は最新の Chrome / Edge（Chromium系）です。
@@ -54,4 +67,4 @@
 
 ## 注意
 
-MiniCPM5-2BのWebGPU ONNXは大きいため、スマートフォンではGPUメモリ・ブラウザ制約により読み込みに失敗する可能性があります。その場合はWASMフォールバックを使うか、より小さいモデルの追加を検討してください。
+MiniCPM5-2BのWebGPU ONNXは大きいため、スマートフォンではGPUメモリ・ブラウザ制約により読み込みに失敗する可能性があります。その場合はWASMフォールバックを使うか、Galaxy A25 5Gなど4GB RAM端末ではTernary Bonsai 4B（Context 2048）を選んでください。

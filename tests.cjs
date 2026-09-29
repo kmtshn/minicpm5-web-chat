@@ -19,6 +19,7 @@ test("UI is split into static HTML, CSS and module app", () => {
   assert.match(html, /src="\.\/mobile-ui\.js"/);
   assert.match(html, /MiniCPM5-2B · WebGPU優先/);
   assert.match(html, /MiniCPM-V 4\.6 · 画像対応/);
+  assert.match(html, /Ternary Bonsai 4B · 軽量WASM/);
 });
 
 test("Transformers.js is pinned to the current WebGPU runtime", () => {
@@ -40,6 +41,14 @@ test("WebGPU failure falls back to local GGUF/WASM", () => {
   assert.match(app, /@wllama\/wllama@3\.6\.1/);
   assert.match(app, /falling back to WASM/);
   assert.match(app, /await loadWllama\("text"\)/);
+});
+
+test("Ternary Bonsai 4B uses the current mainline-compatible GGUF path", () => {
+  assert.match(app, /prism-ml\/Ternary-Bonsai-4B-gguf/);
+  assert.match(app, /Ternary-Bonsai-4B-Q2_0_g64\.gguf/);
+  assert.match(app, /recommendedContext: 2048/);
+  assert.match(app, /modelKey === "vision" \|\| modelKey === "ternary"/);
+  assert.match(app, /await loadWllama\(target\)/);
 });
 
 test("vision mode remains MiniCPM-V and uses local wllama", () => {
@@ -82,7 +91,7 @@ test("mobile layout prioritizes chat input and compact controls", () => {
 });
 
 test("service worker caches the complete app shell", () => {
-  assert.match(sw, /minicpm-webgpu-v4/);
+  assert.match(sw, /minicpm-webgpu-v5/);
   assert.match(sw, /"\.\/styles\.css"/);
   assert.match(sw, /"\.\/app\.js"/);
   assert.match(sw, /"\.\/thinking-ui\.js"/);
