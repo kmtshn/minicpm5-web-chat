@@ -108,7 +108,7 @@ test("mobile layout prioritizes chat input and compact controls", () => {
 });
 
 test("service worker caches the complete app shell", () => {
-  assert.match(sw, /minicpm-webgpu-v5/);
+  assert.match(sw, /minicpm-webgpu-v7/);
   assert.match(sw, /"\.\/styles\.css"/);
   assert.match(sw, /"\.\/app\.js"/);
   assert.match(sw, /"\.\/thinking-ui\.js"/);
