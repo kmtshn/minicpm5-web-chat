@@ -68,9 +68,10 @@ GitHub Pagesでは設定できないCOOP / COEPヘッダーを、Cloudflare Page
 - `_headers` — Cloudflare Pages用のCross-Origin Isolation設定
 - `wrangler.jsonc` — ルートをそのままPagesへ公開する設定
 
-CloudflareダッシュボードのGit連携でこのリポジトリを接続し、ビルドコマンドなし・出力ディレクトリ `.` で公開できます。Direct Uploadの場合は、プロジェクト作成後に次を実行します。
+CloudflareダッシュボードのGit連携でこのリポジトリを接続し、ビルドコマンドなし・出力ディレクトリ `.` で公開できます。Direct Uploadの場合は、必ずこのリポジトリのルートへ移動してから実行してください。`C:\\Users\\user`などホームディレクトリで `.` を指定すると、ホーム内の大容量ファイルまでアップロード対象になります。
 
-```bash
+```powershell
+cd C:\\path\\to\\minicpm5-web-chat
 npx wrangler pages project create minicpm5-web-chat
 npx wrangler pages deploy . --project-name=minicpm5-web-chat
 ```
