@@ -1,0 +1,7 @@
+# Cloudflare Pages only: enable cross-origin isolation for wllama pthreads.
+# GitHub Pages ignores this file.
+ /*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Content-Type-Options: nosniff
