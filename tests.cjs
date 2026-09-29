@@ -53,7 +53,7 @@ test("Ternary Bonsai 4B uses the current mainline-compatible GGUF path", () => {
 });
 
 test("Bonsai avoids hidden reasoning and forced single-thread execution", () => {
-  assert.match(app, /n_gpu_layers: webgpuCaps\.available \? 99999 : 0/);
+  assert.match(app, /const gpuLayers = webgpuCaps\.available \? 99999 : 0/);
   assert.match(app, /reasoning: false/);
   assert.match(app, /chat_template_kwargs: \{ enable_thinking: false \}/);
   assert.match(app, /\/no_think/);
