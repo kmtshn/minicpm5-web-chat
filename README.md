@@ -73,10 +73,10 @@ CloudflareダッシュボードのGit連携でこのリポジトリを接続し�
 ```powershell
 cd C:\\path\\to\\minicpm5-web-chat
 npx wrangler pages project create minicpm5-web-chat
-npx wrangler pages deploy . --project-name=minicpm5-web-chat
+npx wrangler pages deploy . --project-name=minicpm5-web-chat --branch=production
 ```
 
-公開後、ブラウザの開発者コンソールで `crossOriginIsolated === true` を確認し、アプリのBackend欄が `SharedArrayBuffer有効` になっていることを確認してください。Cloudflare PagesのDirect Upload手順は[公式ドキュメント](https://developers.cloudflare.com/pages/get-started/direct-upload/)を参照してください。
+公開後、ブラウザの開発者コンソールで `crossOriginIsolated === true` を確認し、アプリのBackend欄が `SharedArrayBuffer有効` になっていることを確認してください。Direct Upload作成時に本番ブランチを `production` とした場合は、上記の `--branch=production` を必ず付けてください。Cloudflare PagesのDirect Upload手順は[公式ドキュメント](https://developers.cloudflare.com/pages/get-started/direct-upload/)を参照してください。
 ## 主なファイル
 
 - `index.html` — UI
