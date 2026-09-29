@@ -1,4 +1,4 @@
-const CACHE = "minicpm-webgpu-v5";
+const CACHE = "minicpm-webgpu-v6";
 const BASE = new URL("./", self.location.href);
 const SHELL = [
   "./",
